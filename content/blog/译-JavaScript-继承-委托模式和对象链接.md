@@ -4,6 +4,14 @@ date: 2018-12-31 11:28:02
 tags: 写作计划
 ---
 
+
+
+> 原文地址: https://codeburst.io/javascript-inheritance-25fe61ab9f85
+>
+> 作者:  [NC Patro](https://codeburst.io/@npatro7m?source=post_header_lockup)
+
+
+
 > 学习 JavaScript (原型继承) 中的继承，行为/对象委托模式和关联到其它对象的对象
 
 
