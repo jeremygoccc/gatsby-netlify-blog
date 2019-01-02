@@ -22,7 +22,7 @@ tags: 写作计划
 
 ## 经典继承与原型继承
 
-![](http://ww1.sinaimg.cn/large/e4336439gy1fyq02t1mzbj21680kqmym.jpg)
+![继承图](https://jeremy-bucket.oss-cn-shenzhen.aliyuncs.com/%E5%9B%BE%E5%BA%8A/1_UZKbYsRuM1OVW3__aZdPdw.png)
 
 ### 经典继承（非 JavaScript）
 
@@ -83,7 +83,7 @@ c2.run();   // "Hello engine of Baleno starting..."
 
 上述代码的图解表示: 
 
-![](http://ww1.sinaimg.cn/large/e4336439gy1fyq03lccgij20rf0kqgp7.jpg)
+![javascript继承图](https://jeremy-bucket.oss-cn-shenzhen.aliyuncs.com/%E5%9B%BE%E5%BA%8A/1_OEMd8RbQYOc3aonG4MY0EQ.png)
 
 ### 与其它对象关联的对象
 
@@ -125,7 +125,7 @@ c2.run();   // "Hello engine of Baleno starting..."
 
 上述代码的图解展示
 
-![](http://ww1.sinaimg.cn/large/e4336439gy1fyq042suhzj20gc0ejgn6.jpg)
+![对象链接](https://jeremy-bucket.oss-cn-shenzhen.aliyuncs.com/%E5%9B%BE%E5%BA%8A/1_4zepJJxri6PgfxQIpMFiAA.png)
 
 - 现在我们可以看到，我们如何消除了 *new* ，所有 *.prototype* ，构造函数和调用方法的复杂性，并且仍然实现了相同的结果。
 - 唯一重要的是 `c1` 链接到一个对象然后再链接到另一个对象，依次类推。
