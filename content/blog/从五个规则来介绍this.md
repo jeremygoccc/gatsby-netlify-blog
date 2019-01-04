@@ -1,14 +1,45 @@
+在文章开始以前我们先做一道题: 
+
+```js
+window.name = "window";
+
+function User(name) {
+  this.name = name;
+  this.greet1 = function() {
+    console.log(this.name);
+  };
+  this.greet2 = function() {
+    return function() {
+      console.log(this.name);
+    };
+  };
+  this.greet3 = function() {
+    return () => console.log(this.name);
+  };
+}
+
+const UserA = new User("UserA");
+const UserB = new User("UserB");
+
+UserA.greet1();
+UserA.greet1.call(UserB);
+
+UserA.greet2()();
+UserA.greet2.call(UserB)();
+
+UserA.greet3()();
+UserA.greet3.call(UserB)();
+```
+
+你可以自己先试着写出答案，如果你想检验自己的答案可以直接移到文末，我们也会在最后进行解析。
+
 本文将会从以下五个规则来介绍 `JavaScript` 中的 *this* :
 
 - 隐式绑定
 - 显式绑定
 - *new* 绑定
 - 词法绑定
-- window 绑定
-
-同时在这个过程中也会介绍到 `JavaScript` 中的 `.call` `.apply` `.bind` 以及 `new` 关键字。
-
-在开始之前我们需要知道如何区分 `this` 的指向，记住一句话: `this` 的指向是看使用 `this` 的函数在哪里被调用。
+- *window* 绑定
 
 ## 隐式绑定
 
@@ -50,8 +81,6 @@ const user = {
 
 调用 `user.son.greet()` 的结果是否符合你的预期呢?
 
-## 显示绑定
-
 现在让我们改写一下代码:
 
 ```js
@@ -66,6 +95,8 @@ const user = {
 
 我们将 `greet` 拆成了独立的函数，现在我们该怎么做让 `greet` 中的 `this` 指向 `user` 对象呢 ?
 
+## 显示绑定
+
 在 JavaScript 中，每一个函数都有一个方法可以让你实现这个功能 (即改变 `this` 的指向) ，这就是 `call`:
 
 > **`call()`** 方法调用一个具有给定 `this` 值的函数, 以及分别提供的参数(**参数的列表**)。
@@ -78,7 +109,7 @@ greet.call(user)
 
 这就是 **显示绑定** 的含义，我们显示地(使用 `.call` )指定了 `this` 的指向。
 
-如果我们想给 `greet` 传入一些参数，这就需要用到 `.call` 方法的其余参数: 
+如果我们想给 `greet` 传入一些参数，这就需要用到 `call` 方法的其余参数: 
 
 ```js
 function greet (l1, l2, l3) {
@@ -104,7 +135,7 @@ greet.call(user, languages[0], languages[1], languages[2]) // My name is Jeremy 
 greet.apply(user, languages) // My name is Jeremy and I know JavaScript, Java and PHP
 ```
 
-最后一个介绍的方法是 `.bind` :
+最后介绍的方法是 `.bind` :
 
 > **`bind() `**方法创建一个新的函数，在调用时设置 `this `关键字为提供的值。并在调用新函数时，将给定参数列表作为原函数的参数序列的前若干项。
 
@@ -132,12 +163,14 @@ console.log(me.name) // Jeremy
 
 - 创建一个新对象
 - 将这个对象链接到原型上
-- 将这个对象绑定到函数调用的 `this`
+- 将这个对象绑定到函数调用的 `this` 上
 - 如果该函数没有返回其它对象，那么就返回这个新对象
 
 ## 词法绑定
 
 上述介绍的四种规则已经可以包含所有的正常函数，但是在 `ES6` 中介绍了一种特殊的函数: 箭头函数。
+
+> **箭头函数表达式**的语法比[函数表达式](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/function)更短，并且没有自己的 [this](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/this)，[arguments](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Functions/arguments)，[super](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/super)或 [new.target](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/new.target) 。这些函数表达式更适用于那些本来需要匿名函数的地方，并且它们不能用作构造函数。
 
 箭头函数没有自己的 `this` ，根据外层(函数或者全局)作用域来决定 `this` 。
 
@@ -196,7 +229,7 @@ var user = {
     name: 'Jeremy',
     languages: ['JavaScript', 'Java', 'PHP'],
     greet () {
-        var self = this
+        var self = this;
         return function () {
             console.log(self.name);
         }
@@ -225,7 +258,7 @@ const user = {
 greet() // My name is undefined
 ```
 
-这就引出了我们最后一个规则，如果我们没有 **隐式绑定** (对象调用)，也没有 **显式绑定**(`.call` ，`.apply` ，`.bind`) 或是 **new 绑定**，那么 `JavaScript` 会默认将 `this` 指向 `window` 对象: 
+这就引出了我们最后一个规则，如果我们没有 **隐式绑定** (对象调用)，也没有 **显式绑定** (`.call` ，`.apply` ，`.bind`) 或是 **new 绑定**，那么 `JavaScript` 会默认将 `this` 指向 `window` 对象: 
 
 ```js
 window.name = 'window'
@@ -245,7 +278,7 @@ greet() // window
 
 ## 总结
 
-最后让我们总结一套判断 `this` 指向的流程: 
+我们来总结一套判断 `this` 指向的流程: 
 
 - 首先看函数在哪里被调用。
 - 函数是通过对象来调用( . 左边是一个对象)吗? 如果是，`this` 指向这个对象，如果不是，继续。
@@ -254,3 +287,45 @@ greet() // window
 - 函数是一个箭头函数吗? 如果是，`this` 指向箭头函数向外第一个非箭头函数的函数，如果不是，继续。
 - 运行环境是严格模式吗? 如果是，`this` 是 `undefined`，如果不是，继续。
 - `this` 指向 `window` 对象。
+
+最后回到文章开始的题目，先给出运行的答案: 
+
+```js
+window.name = "window";
+
+function User(name) {
+  this.name = name;
+  this.greet1 = function() {
+    console.log(this.name);
+  };
+  this.greet2 = function() {
+    return function() {
+      console.log(this.name);
+    };
+  };
+  this.greet3 = function() {
+    return () => console.log(this.name);
+  };
+}
+
+const UserA = new User("UserA");
+const UserB = new User("UserB");
+
+UserA.greet1();  // UserA
+UserA.greet1.call(UserB); // UserB
+
+UserA.greet2()();  // window
+UserA.greet2.call(UserB)(); // window
+
+UserA.greet3()();  // UserA
+UserA.greet3.call(UserB)();  // UserB
+```
+
+`UserA` 与 `UserB` 分别通过 `new` 构造出来，则对应的 `name` 分别为 `UserA` 和 `UserB`
+
+- `UserA.greet1()` : 首先 `greet1` 由 `UserA` 调用，则 `greet1` 内的 `this` 指向 `UserA`，所以输出 `UserA`
+- `UserA.greet1.call(UserB)`： `greet1` 通过 `.call` 调用，指定的对象是 `UserB`，所以输出 `UserB`
+- `UserA.greet2()()`：首先 `greet2` 通过 `UserA` 调用，返回了一个没有绑定上下文对象的函数，所以此时输出为 `window`
+- `User.greet2.call(UserB)()`：这里 `gree2` 通过 `.call` 指定 `UserB` 调用，但是同样返回了一个没有绑定上下文对象的函数，所以输出依然为 `window`
+- `UserA.greet3()()`：这里返回的是词法绑定的箭头函数，绑定的上下文对象为 `UserA`，所以输出 `UserA`
+- `UserA.gree3.call(UserB)()`：这里同样返回了箭头函数，绑定的上下文对象为通过 `.call` 指定的 `UserB`，所以输出 `UserB`
