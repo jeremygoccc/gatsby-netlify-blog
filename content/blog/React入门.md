@@ -8,21 +8,21 @@ tags: React
 
 本文将会从零开始介绍 React 的核心知识点，以下是参考大纲~
 
-- [React](#react)
-  - [React 是什么](#react-%E6%98%AF%E4%BB%80%E4%B9%88)
-  - [为什么要使用 React](#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8-react)
-- [项目预览](#%E9%A1%B9%E7%9B%AE%E9%A2%84%E8%A7%88)
-- [JSX](#jsx)
-- [Styles](#styles)
-- [组件](#%E7%BB%84%E4%BB%B6)
-  - [props](#props)
-- [类组件](#%E7%B1%BB%E7%BB%84%E4%BB%B6)
-  - [State](#state)
-  - [事件处理](#%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86)
-  - [生命周期](#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)
-- [更多](#%E6%9B%B4%E5%A4%9A)
-  - [脚手架](#%E8%84%9A%E6%89%8B%E6%9E%B6)
-  - [状态管理与路由](#%E7%8A%B6%E6%80%81%E7%AE%A1%E7%90%86%E4%B8%8E%E8%B7%AF%E7%94%B1)
+- React
+  - React 是什么
+  - 为什么要使用 React
+- 项目预览
+- JSX
+- Styles
+- 组件
+  - props
+- 类组件
+  - State
+  - 事件处理
+  - 生命周期
+- 更多
+  - 脚手架
+  - 状态管理与路由
 
 话不多说，直接进入~
 
