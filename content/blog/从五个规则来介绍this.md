@@ -47,7 +47,7 @@ UserA.greet3.call(UserB)();
 - 显式绑定
 - *new* 绑定
 - 词法绑定
-- *window* 绑定
+- 默认绑定
 
 ## 隐式绑定
 
@@ -103,7 +103,7 @@ const user = {
 
 我们将 `greet` 拆成了独立的函数，现在我们该怎么做让 `greet` 中的 `this` 指向 `user` 对象呢 ?
 
-## 显示绑定
+## 显式绑定
 
 在 JavaScript 中，每一个函数都有一个方法可以让你实现这个功能 (即改变 `this` 的指向) ，这就是 `call`:
 
@@ -115,7 +115,7 @@ const user = {
 greet.call(user)
 ```
 
-这就是 **显示绑定** 的含义，我们显示地(使用 `.call` )指定了 `this` 的指向。
+这就是 **显式绑定** 的含义，我们显示地(使用 `.call` )指定了 `this` 的指向。
 
 如果我们想给 `greet` 传入一些参数，这就需要用到 `call` 方法的其余参数: 
 
@@ -147,7 +147,7 @@ greet.apply(user, languages) // My name is Jeremy and I know JavaScript, Java an
 
 > **`bind() `**方法创建一个新的函数，在调用时设置 `this `关键字为提供的值。并在调用新函数时，将给定参数列表作为原函数的参数序列的前若干项。
 
-`.bind` 和 `.call` 类似，区别在于不同于 `.call` 的立即调用，`.bind` 会返回一个新函数可以让你**之后再调用**:
+`.bind` 和 `.call` 类似，区别在于 `.call` 是立即调用，`.bind` 会返回一个新函数可以让你**之后再调用**:
 
 ```js
 const newFn = greet.bind(user, languages[0], languages[1], languages[2])
@@ -167,12 +167,14 @@ const me = new User('Jeremy')
 console.log(me.name) // Jeremy
 ```
 
-`JavaScript` 中的 `new` 使用起来跟传统面向类的语言一样，但内部机制是完全不一样的，当我们使用 `new` 来调用函数，或者说发生构造函数调用时，会执行以下操作:
+使用 `new` 来调用 `User` 时，我们会构造一个新对象并把它绑定到 `User` 调用中的 `this` 上。
 
-- 创建一个新对象
-- 将这个对象链接到原型上
-- 将这个对象绑定到函数调用的 `this` 上
-- 如果该函数没有返回其它对象，那么就返回这个新对象
+>`JavaScript` 中的 `new` 使用起来跟传统面向类的语言一样，但内部机制是完全不一样的，当我们使用 `new` 来调用函数，或者说发生构造函数调用时，会执行以下操作:
+>
+>- 创建一个新对象
+>- 将这个对象链接到原型上
+>- 将这个对象绑定到函数调用的 `this` 上
+>- 如果该函数没有返回其它对象，那么就返回这个新对象
 
 ## 词法绑定
 
@@ -196,7 +198,7 @@ const user = {
 }
 ```
 
-我们在 `greet` 方法中返回了一个函数，当我们试着调用 `user.greet()()` 时，返回的是 `undefined `。
+我们在 `greet` 方法中返回了一个函数，当我们试着调用 `user.greet()()` 时，返回的是 `undefined ` 。
 
 出现这个的原因是我们调用返回的函数时没有绑定的上下文对象(默认就变成了 `window` )，因此很直接的一种想法就是我们运用 **显式绑定** ，更改代码如下: 
 
@@ -246,7 +248,9 @@ var user = {
 
 user.greet()() // Jeremy
 ```
-## window 绑定
+> 在同一个函数或者同一个程序中最好不要混用这两种风格，否则代码会更难编写与维护。
+
+## 默认绑定
 
 最后让我们重新看这一段代码:
 
@@ -266,7 +270,7 @@ const user = {
 greet() // My name is undefined
 ```
 
-这就引出了我们最后一个规则，如果我们没有 **隐式绑定** (对象调用)，也没有 **显式绑定** (`.call` ，`.apply` ，`.bind`) 或是 **new 绑定**，那么 `JavaScript` 会默认将 `this` 指向 `window` 对象: 
+这就引出了我们最后一个规则，如果我们没有 **隐式绑定** (对象调用)，也没有 **显式绑定** (`.call` ，`.apply` ，`.bind`) 或是 **new 绑定**，那么 `JavaScript` 会默认将 `this` 指向 `window` 对象(因此默认绑定也称为 **window绑定**): 
 
 ```js
 window.name = 'window'
@@ -337,3 +341,11 @@ UserA.greet3.call(UserB)();  // UserB
 - `User.greet2.call(UserB)()`：这里 `gree2` 通过 `.call` 指定 `UserB` 调用，但是同样返回了一个没有绑定上下文对象的函数，所以输出依然为 `window`
 - `UserA.greet3()()`：这里返回的是词法绑定的箭头函数，绑定的上下文对象为 `UserA`，所以输出 `UserA`
 - `UserA.gree3.call(UserB)()`：这里同样返回了箭头函数，绑定的上下文对象为通过 `.call` 指定的 `UserB`，所以输出 `UserB`
+
+
+
+参考链接：
+
+- [You don't know js ](https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch2.md)
+- [Understanding the "this" keyword, call, apply, and bind in JavaScript](https://tylermcginnis.com/this-keyword-call-apply-bind-javascript/)
+- [从这两套题，重新认识JS的this、作用域、闭包、对象](https://juejin.im/post/59aa71d56fb9a0248d24fae3)
