@@ -201,7 +201,11 @@ const historyReplace = path => {
 
 ## 最后
 
-React Router v4 的原理是很值得学习的，`React` 可以让你成为一个更好的 `JavaScript` 开发者，而 `React-Router` 可以让你成为一个更好的 `React` 开发者。
+`React Router v4` 的原理是很值得学习的，`React` 可以让你成为一个更好的 `JavaScript` 开发者，而 `React-Router` 可以让你成为一个更好的 `React` 开发者。
+
+参考 :
+
+- [Build your own React Router v4](https://tylermcginnis.com/build-your-own-react-router-v4/)
 
 
 
