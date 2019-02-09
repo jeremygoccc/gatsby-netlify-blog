@@ -1,0 +1,26 @@
+body {
+  background-color: #fff;
+  color: #333;
+  transition: background-color 0.3s ease;
+}
+
+// Styles set when in dark mode
+body.dark-mode {
+  background-color: #232323;
+  color: #dfdfdf;
+
+  .dark-mode-toggle > button {
+    color: #999;
+    &:last-child {
+      color: #ffffff;
+    }
+  }
+
+  :not(pre) > code[class*="language-"] {
+    border-radius: .3em;
+    background: #4b4646;
+    color: #f6f3f3;
+    padding: .15em .2em .05em;
+    white-space: normal;
+  }
+}

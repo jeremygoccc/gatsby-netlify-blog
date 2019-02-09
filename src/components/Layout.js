@@ -3,6 +3,16 @@ import { Link } from 'gatsby'
 
 import { rhythm, scale } from '../utils/typography'
 
+import Toggle from './Toggle'
+
+import './Layout.scss'
+
+const headerStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}
+
 class Layout extends React.Component {
   render() {
     const { location, title, children } = this.props
@@ -11,45 +21,55 @@ class Layout extends React.Component {
 
     if (location.pathname === rootPath) {
       header = (
-        <h1
-          style={{
-            ...scale(1.0),
-            marginBottom: rhythm(1.5),
-            marginTop: 0,
-          }}
+        <header
+          style={headerStyle}
         >
-          <Link
+          <h1
             style={{
-              boxShadow: `none`,
-              textDecoration: `none`,
-              color: `inherit`,
+              ...scale(1.0),
+              marginBottom: rhythm(1.5),
+              marginTop: 0,
             }}
-            to={`/`}
           >
-            {title}
-          </Link>
-        </h1>
+            <Link
+              style={{
+                boxShadow: `none`,
+                textDecoration: `none`,
+                color: `inherit`,
+              }}
+              to={`/`}
+            >
+              {title}
+            </Link>
+          </h1>
+          <Toggle />
+        </header>
       )
     } else {
       header = (
-        <h3
-          style={{
-            fontFamily: `Montserrat, sans-serif`,
-            marginTop: 0,
-            marginBottom: rhythm(-1),
-          }}
+        <header
+          style={headerStyle}
         >
-          <Link
+          <h3
             style={{
-              boxShadow: `none`,
-              textDecoration: `none`,
-              color: `#ce9145`,
+              fontFamily: `Montserrat, sans-serif`,
+              marginTop: 0,
+              marginBottom: rhythm(-1),
             }}
-            to={`/`}
           >
-            {title}
-          </Link>
-        </h3>
+            <Link
+              style={{
+                boxShadow: `none`,
+                textDecoration: `none`,
+                color: `#ce9145`,
+              }}
+              to={`/`}
+            >
+              {title}
+            </Link>
+          </h3>
+          <Toggle />
+        </header>
       )
     }
     return (

@@ -1,19 +1,43 @@
+import './theme.css'
+
 import Typography from 'typography'
 import Wordpress2016 from 'typography-theme-wordpress-2016'
 
 Wordpress2016.overrideThemeStyles = () => ({
   a: {
-    color: '#ce9145'
+    color: '#ce9145',
+  },
+  hr: {
+    background: 'var(--hr)',
   },
   'a.gatsby-resp-image-link': {
-    boxShadow: `none`,
+    boxShadow: 'none',
+  },
+  // These two are for gatsby-remark-autolink-headers:
+  'a.anchor': {
+    boxShadow: 'none',
+  },
+  'a.anchor svg[aria-hidden="true"]': {
+    stroke: '#ce9145',
   },
   'p code': {
-    fontSize: '1.1rem'
+    fontSize: '1rem',
+  },
+  // TODO: why tho
+  'h1 code, h2 code, h3 code, h4 code, h5 code, h6 code': {
+    fontSize: 'inherit',
   },
   'li code': {
-    fontSize: '1rem'
-  }
+    fontSize: '1rem',
+  },
+  blockquote: {
+    color: 'inherit',
+    borderLeftColor: 'inherit',
+    opacity: '0.8',
+  },
+  'blockquote.translation': {
+    fontSize: '1em',
+  },
 })
 
 delete Wordpress2016.googleFonts
