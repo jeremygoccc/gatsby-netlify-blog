@@ -3,7 +3,7 @@ import { Link } from 'gatsby'
 
 import { rhythm, scale } from '../utils/typography'
 
-// import Toggle from './Toggle'
+import Toggle from './Toggle'
 
 import './Layout.scss'
 
@@ -42,7 +42,7 @@ class Layout extends React.Component {
               {title}
             </Link>
           </h1>
-          {/* <Toggle /> */}
+          <Toggle />
         </header>
       )
     } else {
@@ -68,7 +68,7 @@ class Layout extends React.Component {
               {title}
             </Link>
           </h3>
-          {/* <Toggle /> */}
+          <Toggle />
         </header>
       )
     }

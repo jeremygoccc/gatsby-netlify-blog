@@ -17,7 +17,7 @@ const ToggleControl = ({ checked, onChange }) => (
 )
 
 const Toggle = () => {
-  const darkMode = useDarkMode(false, { element: global.document.body })
+  const darkMode = useDarkMode(false)
 
   return (
     <div className="dark-mode-toggle">

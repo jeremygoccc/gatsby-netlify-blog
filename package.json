@@ -36,8 +36,7 @@
     "typeface-montserrat": "0.0.43",
     "typography": "^0.16.17",
     "typography-theme-wordpress-2016": "^0.15.10",
-    "use-dark-mode": "^2.1.2",
-    "window-or-global": "^1.0.1"
+    "use-dark-mode": "^2.2.0-alpha.0"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
