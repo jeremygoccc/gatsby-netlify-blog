@@ -4,7 +4,7 @@ date: 2019-02-11 00:34:40
 tags: Fiber
 ---
 
-`React` 从 [v16](https://reactjs.org/blog/2017/09/26/react-v16.0.html) 开始内部重新实现了 `diff` 算法，管理代号为 **FIber** 。比起之前的实现极大地提高了性能，本文将会结合一个实例整体剖析一下 `Fiber` 的内部架构。
+`React` 从 [v16](https://reactjs.org/blog/2017/09/26/react-v16.0.html) 开始启用了全新的架构，管理代号为 **Fiber** 。比起之前的实现极大地提高了性能，本文将会结合一个实例整体剖析一下 `Fiber` 的内部架构。
 
 ## 概览
 
