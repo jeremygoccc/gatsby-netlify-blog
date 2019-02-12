@@ -36,12 +36,12 @@ class ClickCounter extends React.Component {
 当我们点击 Update counter 按钮以后，`React` 会做以下事情 :
 
 - 更新 `ClickCounter` 组件 `state` 的 `count` 属性。
-- 检索并且比较 `ClickCounter` 组件的子组件及他们的 `props`。
+- 检索并比较 `ClickCounter` 组件的子组件及他们的 `props`。
 - 更新 `span` 元素的 `props`。
 
-下面让我们深入来解析这个过程~
+下面让我们深入来解析这个过程 ~
 
-### 从 React 元素 到 Fiber 节点
+### 从 React 元素到 Fiber 节点
 
 `React` 每个组件渲染的 UI 都是通过 `render` 方法的，我们使用的 `JSX` 语法，会被编译成通过 `React.createElemnet` 方法来调用，比如上面的 UI 结构 : 
 
@@ -114,7 +114,7 @@ React.createElement(
 
 ### Fiber 节点
 
-在协调算法调用期间，每个 `render` 转化的 `React` 元素都会被合并到 `Fiber` 节点树上，每个`React` 元素都有一个对应的 `Fiber` 节点， 不同于 `React` 元素，`fibers` 不会随着每个 `render` 而重新创建，它们是可变的数据结构。
+在协调算法调用期间，每一个 `render` 转化的 `React` 元素都会被合并到 `Fiber` 节点树上，每个`React` 元素都有一个对应的 `Fiber` 节点， 不同于 `React` 元素，`fibers` 不会随着每个 `render` 而重新创建，它们是可变的数据结构。
 
 > 不同类型的 `React` 元素都有**[对应的 type](https://github.com/facebook/react/blob/769b1f270e1251d9dbdce0fcbd9e92e502d059b8/packages/shared/ReactWorkTags.js)** 来定义需要被做的工作。
 >
@@ -122,15 +122,15 @@ React.createElement(
 
 当 `Fiber` 节点首次被创建之后，后续的更新 `React` 会复用 `Fiber` 节点并且只更新必要的属性。如果定义了 `key` ，`React` 还会选择是否仅单纯移动节点来优化性能。
 
-转化完成以后我们就有了类似这样一个树结构 :
+转化完成以后我们就有了这样一个树结构 :
 
 ![fiber-tree](https://jeremy-bucket.oss-cn-shenzhen.aliyuncs.com/%E5%9B%BE%E5%BA%8A/1_cLqBZRht7RgR9enHet_0fQ.png)
 
-所有的 `Fiber` 节点都通过一个链表相连，并带有这三个属性 :  **`child`**、**`sibling`** 和 **`return`**。
+所有的 `Fiber` 节点都通过一个链表相连，并带有这三个属性 :  **`child`**、**`sibling`** 和 **`return`**。（关于 `Fiber` 节点的设计后文会详细讲解）。
 
 ### Current 和 workInProgress 树
 
-上面转化完成后的树就是 **current** 树，当`React` 开始更新时它遍历 **current** 树，遍历的过程中会创建对应的节点并组成了**workInProgress** 树，当所有的更新及相关操作完成后，`React` 会把 **workInProgress** 树的内容渲染到屏幕上，然后 **workInProgress** 树就变成了 **current** 树。
+上面转化完成后的树就是 **current** 树，当`React` 开始更新时它会遍历 **current** 树，同时创建对应的节点组成了**workInProgress** 树，当所有的更新及相关操作完成后，`React` 会把 **workInProgress** 树的内容渲染到屏幕上，然后 **workInProgress** 树就变成了 **current** 树。
 
 > **`workInProgress`** 树也被称为 **`finishedWork`** 树。
 
@@ -148,9 +148,9 @@ function updateHostComponent (current, workInProgress, renderExpirationTime) { .
 
 - 对于 DOM 组件 : 包含了新增、更新或移除元素的操作。
 - 对于类组件 :  包含了更新 ref 和调用 `componentDidMount`、`componentDidUpdate` 生命周期方法。
-- ...
+- ......
 
-为了快速地处理更新， `React` 选择了很多有趣的技术，其中一个就是建立 `Fiber` 节点的线性表，遍历线性表的速度快于遍历树。线性表的目标是标记带有 DOM 更新或其它副作用的节点，它是 **`finishedWork`** 树的子集并且通过 **`nextEffect`** 属性相连。
+为了快速地处理更新， `React` 采用了很多高效的措施，其中一个就是建立 `Fiber` 节点的线性表，遍历线性表的速度快于遍历树。建立线性表的目的是标记带有 DOM 更新或其它副作用的节点，它是 **`finishedWork`** 树的子集，通过 **`nextEffect`** 属性相连。
 
 举个例子 :  当我们的更新造成 **`c2`** 被插入到 DOM 中，同时 **`d2`** 和 **`c1`** 改变了属性值，**`b2`** 调用了一个生命周期方法，副作用线性表会将它们连在一起这样 `React` 之后可以直接跳过其它节点 :
 
@@ -179,7 +179,7 @@ function updateHostComponent (current, workInProgress, renderExpirationTime) { .
 
 从 v16.3 开始，一些遗留的生命周期方法已经被标记为 **不安全**，也就是官方已经不推荐使用的方法，它们将在未来的 v16.x 版本中启用警告，并将会在 v17.0 版本中删除，详细可阅读 [Update on Async Rendering](https://reactjs.org/blog/2018/03/27/update-on-async-rendering.html)。
 
-为什么官方会标记为不安全？因为 **`render`** 阶段不会产生像 DOM 更新这样的副作用，`React` 可以异步地更新处理组件，但是被标记为不安全的这些方法常常被开发者误解和误用，开发者常常会在这些方法中放入带有副作用的代码造成异步渲染出错。
+为什么官方会标记为不安全？因为 **`render`** 阶段不会产生像 DOM 更新这样的副作用，`React` 可以异步地更新处理组件，但是被标记为不安全的这些方法常常被开发者误用，往往会在这些方法中放入带有副作用的代码造成异步渲染出错。
 
 相对地，**`commit`** 阶段总是同步的，因为这个阶段的处理会导致用户可见的变化，比如说 DOM 更新，因此 `React` 需要一次完成它们。
 
@@ -198,7 +198,7 @@ function updateHostComponent (current, workInProgress, renderExpirationTime) { .
 
 #### 工作循环的主要步骤
 
-所有 fiber 节点会在 [工作循环](https://github.com/facebook/react/blob/f765f022534958bcf49120bf23bc1aa665e8f651/packages/react-reconciler/src/ReactFiberScheduler.js#L1136) 中处理，看一下循环中同步部分的实现 :
+所有 fiber 节点会在 [工作循环](https://github.com/facebook/react/blob/f765f022534958bcf49120bf23bc1aa665e8f651/packages/react-reconciler/src/ReactFiberScheduler.js#L1136) 函数中处理，看一下循环中同步部分的实现 :
 
 ```js
 function workLoop (isYieldy) {
@@ -243,7 +243,7 @@ function beginWork (workInProgress) {
 
 **`performUnitOfWork`** 函数接收一个来自 **`workInProgress`** 树的 fiber 节点然后通过调用 **`beginWork`** 函数开始工作，这个函数会执行一个 fiber 节点所有需要执行的操作（简化处理这里只打印了 fiber 节点的名字表示已完成）。**`beginWork`** **函数总是返回一个指向下一个子节点的指针或是 `null`**。
 
-如果有下一个子节点，它就会被赋值给 **`workLoop`** 函数中的变量 **`nextUnifOfWork`**，如果没有了，`React` 就知道已经到达这个节点分支的末尾因此可以完成当前节点。**一旦一个节点完成了，它将会处理兄弟节点的工作然后再回溯父节点**。看一下 **`completeUnitOfWork`** 函数 :
+如果有下一个子节点，它就会被赋值给 **`workLoop`** 函数中的变量 **`nextUnifOfWork`**，如果没有了，`React` 就知道已经到达这个节点分支的末尾，因此可以完成当前节点。**一旦一个节点完成了，它将会处理兄弟节点的工作然后再回溯父节点**。看一下 **`completeUnitOfWork`** 函数 :
 
 ```js
 function completeUnitOfWork (workInProgress) {
@@ -353,9 +353,9 @@ function commitRoot (root, finishedWork) {
 
 在 render 阶段 `React` 会遍历整个组件树并执行一系列操作，这些操作都在 `Fiber` 内部执行，并且不同的元素类型会有不同的工作要处理，就像 [Andrew](https://github.com/acdlite/react-fiber-architecture) 说的 :
 
-> 当处理 UI 时，很大的一个问题时如果大量的工作同时执行，会造成动画掉帧。
+> 当处理 UI 时，很大的一个问题是如果大量的工作同时执行，就会造成动画掉帧。
 
-如果 `React` 同步地遍历整个组件树并且为每个组件处理工作，这很可能就会运行超过可用的 16ms，进而就会造成视觉上的卡顿。但是我们完全没有必要采用同步的方式，`React` 的 [设计原则](https://facebook.github.io/react/contributing/design-principles.html#scheduling) 中有一些关键点 :
+如果 `React` 采用同步的方式遍历整个组件树并且为每个组件处理工作，这很容易就会运行超过 16ms，进而就会造成视觉上的卡顿。但是我们完全没有必要采取同步的方式，`React` 的 [设计原则](https://facebook.github.io/react/contributing/design-principles.html#scheduling) 中有一些关键点 :
 
 - 并不是所有的 UI 更新都需要立即生效（这样可能会掉帧）。
 - 不同类型的更新有不同的优先级（动画响应远高于数据获取）。
@@ -380,7 +380,7 @@ requestIdleCallback((deadline) => {
 })
 ```
 
-`deadline.timeRemaining()` 会显示有多少时间让我可以做任何工作，`deadline.didTimeout` 表示是否用完分配的所有时间。`timeRemaining` 会在浏览器完成某些工作后立即更改，所以必须不断检查。
+`deadline.timeRemaining()` 会显示有多少时间可以做任何工作，`deadline.didTimeout` 表示是否用完分配的所有时间。`timeRemaining` 会在浏览器完成某些工作后立即更改，所以必须不断检查。
 
 > **`requestIdleCallback`** 实际上有些过于严格导致常常 [不足以实现流畅的 UI 渲染](https://github.com/facebook/react/issues/13206#issuecomment-418923831) ，因此 React 团队不得不[重新实现自己的版本](https://github.com/facebook/react/blob/eeb817785c771362416fd87ea7d2a1a32dde9842/packages/scheduler/src/Scheduler.js#L212-L222)。
 
@@ -422,11 +422,11 @@ Sebastian Markbage [在这里](https://github.com/facebook/react/issues/7942#iss
 
 ![linkedlistfiber](https://jeremy-bucket.oss-cn-shenzhen.aliyuncs.com/%E5%9B%BE%E5%BA%8A/1_7dsyUaUpKbFG7EoNR9Cu2w.png)
 
-基于这样的结构我们就可以用自己的实现有效替代浏览器的堆栈实现。
+基于这样的结构我们就可以用自己的实现来替代浏览器的堆栈实现。
 
 > 如果你想了解两种遍历详细的代码实现可以见 [The how and why on React’s usage of linked list in Fiber to walk the component’s tree](https://medium.com/react-in-depth/the-how-and-why-on-reacts-usage-of-linked-list-in-fiber-67f1014d0eb7) 。
 
-最后让我们来看一下 详细的 `Fiber` 节点结构，以 **`ClickCounter`** 和 **`span`** 为例 :
+最后让我们来看一下详细的 `Fiber` 节点结构，以 **`ClickCounter`** 和 **`span`** 为例 :
 
 ```js
 {
