@@ -1,8 +1,14 @@
-从准备实习入职到现在已经过了一个多月，从前期的业务熟悉到现在基本完成组内第一个需求模块，整体的节奏暂时稳定下来了，趁着这段时间重新构思了一下接下来的计划，博客方面主要会结合组内的技术栈对 `Vue` 的源码进行一个实际的剖析并输出系列的学习，频率大概在一周一篇左右，加油！
+---
+title: new Vue 时发生了什么
+date: 2019-07-04 00:34:40
+tags: Vue
+---
 
-## Vue 构造函数
+今天结束了大学最后的期末考试，从实习开始博客学习一直都搁置了，结合组内的技术栈，接下来会主要针对 `Vue` 进行源码输出系列的学习，加油！
 
-第一部分会主要研究 `Vue` 的构造函数，我们开发时 `Vue` 是如何引入的？而 `new Vue` 这个操作又具体执行了怎样一个过程？
+
+
+第一步主要来研究 `Vue` 的构造函数，我们开发时 `Vue` 是如何引入的？而 `new Vue` 这个操作又具体执行了怎样一个过程？
 
 当我们在本地开发 `Vue` 项目时都会用到 `npm run dev` 这个命令，在 `package.json` 中完整的命令是：
 
@@ -10,7 +16,7 @@
 rollup -w -c scripts/config.js --environment TARGET:web-full-dev
 ```
 
-当我们执行 `npm run dev` 命令时，`rollup` 会找到 `scripts/config.js` 文件中的配置：
+当我们执行 `npm run dev` 命令时，`rollup` 就会找到 `scripts/config.js` 文件中的配置：
 
 ```js
 // Runtime+compiler development build (Browser)
@@ -238,18 +244,4 @@ export function installRenderHelpers (target: any) {
 之后 `renderMixin` 方法又给 `Vue` 原型添加了两个方法：`$nextTick`、`_render`。 
 
 这样 `npm run dev` 时构建的运行就结束了。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
