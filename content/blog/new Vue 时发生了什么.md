@@ -245,3 +245,210 @@ export function installRenderHelpers (target: any) {
 
 这样 `npm run dev` 时构建的运行就结束了。
 
+回到 `src/core/index.js` 文件：
+
+```js
+import Vue from './instance/index'
+import { initGlobalAPI } from './global-api/index'
+import { isServerRendering } from 'core/util/env'
+import { FunctionalRenderContext } from 'core/vdom/create-functional-component'
+
+initGlobalAPI(Vue)
+
+// Vue.prototype 上添加 $isServer 属性，它代理了来自 core/util/env 文件的 isServerRendering 方法
+Object.defineProperty(Vue.prototype, '$isServer', {
+  get: isServerRendering
+})
+
+// Vue.prototype 上添加 $ssrContext 属性
+Object.defineProperty(Vue.prototype, '$ssrContext', {
+  get () {
+    /* istanbul ignore next */
+    return this.$vnode && this.$vnode.ssrContext
+  }
+})
+
+// expose FunctionalRenderContext for ssr runtime helper installation
+Object.defineProperty(Vue, 'FunctionalRenderContext', {
+  value: FunctionalRenderContext
+})
+
+Vue.version = '__VERSION__'
+
+export default Vue
+```
+
+这里首先以 `Vue` 构造函数为参数调用了 `initGlobalAPI` 函数，然后在 `Vue.prototype` 上添加了两个只读属性：`$isServer` 和 `$ssrContext`，然后在 `Vue` 构造函数上定义了 `FunctionalRenderContext` 静态属性，这里是为了能在 `ssr` 中使用它。
+
+然后来看 `src/core/global-api/index.js` 下的 `initGlobalAPI` 方法：
+
+```js
+const configDef = {}
+configDef.get = () => config
+if (process.env.NODE_ENV !== 'production') {
+    configDef.set = () => {
+        warn(
+        	'Do not replace the Vue.config object, set individual fields instead.'
+        )
+    }
+}
+Object.defineProperty(Vue, 'config', configDef)
+```
+
+这里就是在 `Vue` 构造函数上添加了 `config` 只读属性，代理的是从 `core/config.js` 文件导出的对象。
+
+然后是这样一段代码：
+
+```js
+// exposed util methods.
+// NOTE: these are not considered part of the public API - avoid relying on
+// them unless you are aware of the risk.
+Vue.util = {
+    warn,
+    extend,
+    mergeOptions,
+    defineReactive
+}
+```
+
+在 `Vue` 构造函数上添加了 `util` 对象，它有来自 `core/util/index.js` 文件的四个属性：`warn`，`entend`，`mergeOptions` 和 `defineReactive`。同时注意这里的注释警告，因为它们不被认为是公共 API 的一部分，所以要避免依赖它们，包括在官方文档上也没有介绍 `util` 这个全局 API。
+
+接下来的代码是：
+
+```js
+Vue.set = set
+Vue.delete = del
+Vue.nextTick = nextTick
+
+Vue.options = Object.create(null)
+```
+
+这里在 `Vue` 上添加了四个属性：`set`、`delete`、`nextTick` 和 `options`，通过 `Object.create(null)` 创建了一个空对象 `Vue.options`。
+
+接下来密切关注 `Vue.options` 的变化，下面这段代码：
+
+```js
+ASSET_TYPES.forEach(type => {
+	Vue.options[type + 's'] = Object.create(null)
+})
+
+// this is used to identify the "base" constructor to extend all plain-object
+// components with in Weex's multi-instance scenarios.
+Vue.options._base = Vue
+```
+
+结合来自 `shard/constants.js` 文件的 `ASSET_TYPES` 数组：
+
+```js
+export const ASSET_TYPES = [
+    'component',
+    'directive',
+    'filter'
+]
+```
+
+`Vue.options` 先是变成了这样：
+
+```js
+Vue.options = {
+    components: Object.create(null),
+    directives: Object.create(null),
+    filters: Object.create(null),
+    _base: Vue
+}
+```
+
+然后通过这句代码
+
+```js
+extend(Vue.options.components, builtInComponents)
+```
+
+`extend` 来自 `shared/util.js`，`builtInComponents` 来自 `core/components/index.js`，这句代码将 `builtInComponents` 属性混合到 `Vue.options.components` 中，所以 `Vue.options` 变成了这样：
+
+```js
+Vue.options = {
+    components: {
+        KeepAlive
+    },
+    directives: Object.create(null),
+    filters: Object.create(null),
+    _base: Vue
+}
+```
+
+最后就是以 `Vue` 为参数调用了四个方法：
+
+```js
+initUse(Vue)  // 在 Vue 构造函数上添加 use 方法，即 Vue.use，用来安装 Vue 插件
+initMixin(Vue) // Vue.mixin 方法
+initExtend(Vue) // 添加 Vue.cid 静态属性和 Vue.extend 方法
+initAAssetRegisters(Vue) // Vue.component Vue.directive Vue.filter 静态方法，对应全局注册组件 指令和过滤器
+```
+
+以上我们介绍 `Vue` 构造函数主要是从两个文件：`core/instance/index.js` 和 `core/index.js`。第一个是 `Vue` 够赞函数的定义文件，主要作用是定义 `Vue` 构造函数并给它的原型添加属性和方法，第二个的主要作用是给 `Vue` 添加全局的 API，即静态的方法和属性。它们都在 `core` 目录下，也就是都是与平台无关的代码，我们知道 `Vue` 本身是一个多平台的项目，不同平台可能会内置不同的组件指令或者加一些平台特有的功能等等，这就需要对 `Vue` 根据不同的平台进行处理，这个文件就是 `platforms/web/runtime/index.js`。
+
+打开这个文件在导入语句下是这样的代码：
+
+```js
+// install platform specific utils
+Vue.config.mustUseProp = mustUseProp
+Vue.config.isReservedTag = isReservedTag
+Vue.config.isReservedAttr = isReservedAttr
+Vue.config.getTagNamespace = getTagNamespace
+Vue.config.isUnknownElement = isUnknownElement
+```
+
+这里覆盖了默认导出的 `Vue.config` 对象的属性，即安装平台特定的工具方法。
+
+然后是这两句代码：
+
+```js
+// install platform runtime directives & components
+extend(Vue.options.directive, platformDirectives)
+extend(Vue.options.components, platformComponents)
+```
+
+结合 `platformDirectives` 和 `platformComponents` 的内容最终 `Vue.options` 将变成：
+
+```js
+Vue.options = {
+    components: {
+        keepAlive,
+        Transition,
+        TrasnsitionGroup
+    },
+    directives: {
+        model,
+        show
+    },
+    filters: Object.create(null),
+    _base: Vue
+}
+```
+
+这样即在 `Vue.options` 上添加了 `web` 平台运行的特定组件和指令。
+
+然后是这样一段代码：
+
+```js
+// install platform patch function
+Vue.prototype.__patch__ = inBrowser ? patch : noop
+
+// public mount method
+Vue.prototype.$mount = functon (
+	el?: string | Element,
+    hydrating?: boolean
+): Component {
+    el = el && inBrowser ? query(el) : undefined
+    return mountComponent(this, el, hydrating)
+}
+```
+
+在 `Vue.prototype` 上添加了 `__patch__` 方法：如果是浏览器环境运行则值为 `patch` 函数否则为空函数 `noop`，然后又添加了 `$mount` 方法。
+
+到这里运行时版本的 `Vue` 构造函数就成型了，入口文件也是直接导出这个运行时版。
+
+完整版就是在运行版上多了一个 `Vue.compiler`，在 `entry-runtime-with-compiler.js` 文件中从 `./compiler/index` 中导入了 `compileToFunctions` 并赋值给 `Vue.compiler`，这个文件运行下来就是重写了 `Vue.prototype.$mount` 同时添加了 `Vue.compile` 全局 API。
+
+至此 `Vue` 整个构造函数运行过程就结束了。
