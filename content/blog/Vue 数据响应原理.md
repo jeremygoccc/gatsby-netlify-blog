@@ -111,3 +111,93 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 这样就在实例对象 `vm` 上定义了与 `data` 数据字段同名的访问器属性，即访问 `vm.a` 时实际访问的是 `vm._data.a` 。
 
 最后就是调用 `observe` 函数将 `data` 数据对象转成响应式的。
+
+我们看到 `core/observer/index.js` 下的 `observe` 函数：
+
+```js
+export function observe (value: any, asRootData: ?boolean): Observer | void {
+    if (!isObject(value) || value instanceof VNode) {
+        return
+    }
+    let ob: Observer | void
+    if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+        ob = value.__ob__
+    } else if (
+    	shouldObserve &&
+        !isServerRendering() &&
+        (Array.isArray(value) || isPlainObject(value)) &&
+        Object.isExtensible(value) &&
+        !value._isVue
+    ) {
+        ob = new Observer(value)
+    }
+    if (asRootData && ob) {
+        ob.vmCount++
+    }
+    return ob
+}
+```
+
+`observe` 函数接收两个参数：要观测的数据和布尔值（代表将要被观测的数据是否是根级数据）。
+
+首先一个 `if` 判断如果要观测的数据不是对象或者是 `VNode` 实例，则直接 `return`。
+
+然后又是一个判断，`hasOwn` 函数检测数据对象 `value` 是否含有 `__ob__` 属性同时 `__ob__` 也应该是 `Observer` 的实例，如果是就直接将 `__ob__` 属性作为 `ob` 的值，这里的 `__ob__` 其实就是一个数据对象被观测后就会被定义的属性，所以这里是避免重复观测一个数据对象。
+
+如果没有 `__ob__` 属性即没有被观测则进入 `else...if` 分支，满足以下条件就会被观测：
+
+- `shouldObserve` 必须为 `true` (类比一个开关，在一些场景下需要)
+- `!isServerRendering()` 必须为 `true`（当不是服务端渲染时，可查看相关文档）
+- `(Array.isArray(value) || isPlainObject(value))` 必须为 `true`（当数据对象是数组或者纯对象时才进行观测）
+- `Object.isExtensible(value)` 必须为 `true`（要被观测的数据对象必须是可扩展的，不可扩展处理：`Object.preventExtensions()`、`Object.freeze()`、`Object.seal()`）
+- `!value._isVue` 必须为 `true`（避免 `Vue` 实例对象被观测）
+
+真正执行观测的是 `Observer` 构造函数：
+
+```js
+export class Observer {
+    value: any
+    dep: Dep
+    vmCount: number
+    
+    constructor (value: any) {
+        this.value = value
+        this.dep = new Dep()
+        this.vmCount = 0
+        def(value, '__ob__', this)
+        if (Array.isArray(value)) {
+            if (hasProto) {
+                protoAugment(value, arrayMethods)
+            } else {
+                copyAugment(value, arrayMethods, arrayKeys)
+            }
+            this.observeArray(value)
+        } else {
+            this.walk(value)
+        }
+    }
+
+	/**
+	* Walk through all properties and convert them into
+	* getters/setters. This method should only be called when
+	* value type is Object.
+	*/
+	walk (obj: Object) {
+    	const keys = Objects.keys(obj)
+        for (let i = 0; i < keys.length; i++) {
+            defineReactive(obj, keys[i])
+        }
+	}
+
+	/**
+	* Observe a list of Array items.
+	*/
+	observeArray (items: Array<any>) {
+        for (let i = 0, l = items.length; i < l; i++) {
+            observe(items[i])
+        }
+	}
+}
+```
+
+`Observer` 实例对象有三个实例属性：`value` 、`dep` 和 `vmCount`，两个实例方法：`walk` 和 `observeArray`。
