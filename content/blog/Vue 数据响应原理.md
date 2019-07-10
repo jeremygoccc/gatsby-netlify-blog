@@ -201,3 +201,5 @@ export class Observer {
 ```
 
 `Observer` 实例对象有三个实例属性：`value` 、`dep` 和 `vmCount`，两个实例方法：`walk` 和 `observeArray`。
+
+首先看到 `constructor` 方法，前三句先是定义引用数据对象的 `value` 属性，然后定义一个保存 `Dep` 实例对象的 `dep` 属性，最后定义初始为 0 的 `vmCount` 属性。之后使用 `def` 函数定义了 `__ob__` 属性，值就是当前 `Observer` 的实例对象，这样定义 `__ob__` 属性是为了定义一个不可枚举的属性，这样后面遍历数据对象时就能够防止遍历到 `__ob__` 属性。
