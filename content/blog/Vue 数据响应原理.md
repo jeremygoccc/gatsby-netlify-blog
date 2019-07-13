@@ -205,3 +205,55 @@ export class Observer {
 首先看到 `constructor` 方法，前三句先是定义引用数据对象的 `value` 属性，然后定义一个保存 `Dep` 实例对象的 `dep` 属性，最后定义初始为 0 的 `vmCount` 属性。之后使用 `def` 函数定义了 `__ob__` 属性，值就是当前 `Observer` 的实例对象，这样定义 `__ob__` 属性是为了定义一个不可枚举的属性，这样后面遍历数据对象时就能够防止遍历到 `__ob__` 属性。
 
 然后进入一个判断分支，用来区分数据对象到底是数组还是纯对象，当是一个纯对象时，会执行 `this.walk(value)` 函数，这个函数就是首先用 `Object.keys(obj)` 获取对象所有可枚举的属性，然后循环遍历并给每个属性都调用 `defineReactive` 函数。
+
+我们看到 `core/observer/index.js` 下的 `defineReactive` 函数：
+
+```js
+export function defineReactive (
+	obj: Object,
+    key: string,
+    val: any,
+    customSetter?: ?Function,
+    shallow?: boolean
+) {
+	const dep = new Dep()
+    const property = Object.getOwnPropertyDescriptior(obj, key)
+    if (property && property.configurable === false) {
+        return
+    }
+    
+    // cater for pre-defined getter/setters
+  const getter = property && property.get
+  const setter = property && property.set
+  if ((!getter || setter) && arguments.length === 2) {
+    val = obj[key]
+  }
+
+  let childOb = !shallow && observe(val)
+  Object.defineProperty(obj, key, {
+    enumerable: true,
+    configurable: true,
+    get: function reactiveGetter () {
+      // ...
+    },
+    set: function reactiveSetter (newVal) {
+      // ...
+    }
+  })
+}
+```
+
+这个函数的核心就是将数据对象的数据属性转换为访问器属性，也就是给数据属性设置 `getter/setter`，同时还做了很多处理边界条件的工作。
+
+首先定义了一个 `dep` 常量引用了 `Dep` 实例对象，然后通过 `Object.getOwnPropertyDescriptor` 函数获取该字段可能已有的属性描述对象，然后判断该字段是否可配置，不可配置就直接返回，然后定义了 `getter` 和 `setter` 常量分别保存了来自 `property` 对象的 `get` 和 `set` 函数，这里是因为 `property` 对象是属性的描述对象，它可能已经是一个访问器属性，也就是可能存在 `get` 或 `set` 方法。因为接下来会使用 `Object.defineProperty` 函数重新定义属性 `setter/getter`，会导致属性原有的 `set` 和 `get` 方法被覆盖，所以要将原有 `setter/getter` 缓存，并在重新定义的 `set` 和 `get` 方法中调用缓存的函数，从而做到不影响属性的原有读写操作。
+
+然后是一个判断语句：
+
+```js
+(!getter || setter) && arguments.length === 2
+```
+
+`arguments.length === 2` 表明当只传递两个参数即没有传递第三个参数 `val` 时，需要根据 `key` 主动获取对象上相应的值，`!(getter || setter)` 这个条件留到后面再讲。
+
+然后定义了 `childOb` 变量，在上面的判断语句块中获取到了对象属性的值 `val`，但是 `val` 本身有可能也是一个对象，所以需要继续调用 `observe(val)` 函数进行深度观测，前提是 `defineReactive` 最后一个 `shallow` 参数应该为 `false`，在 `walk` 函数中没有传递这个参数，所以默认就是深度观测。
+
