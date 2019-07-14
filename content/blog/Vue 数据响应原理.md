@@ -257,3 +257,49 @@ export function defineReactive (
 
 然后定义了 `childOb` 变量，在上面的判断语句块中获取到了对象属性的值 `val`，但是 `val` 本身有可能也是一个对象，所以需要继续调用 `observe(val)` 函数进行深度观测，前提是 `defineReactive` 最后一个 `shallow` 参数应该为 `false`，在 `walk` 函数中没有传递这个参数，所以默认就是深度观测。
 
+接下来我们看看 `get` 和 `set` 函数中的代码。
+
+首先是 `get` 函数，也就是当属性被读取时会做哪些事情：
+
+```js
+get: function reactiveGetter () {
+    const value = getter ? getter.call(obj) : val
+    if (Dep.target) {
+        dep.depend()
+        if (childOb) {
+            childOb.dep.depend()
+            if (Array.isArray(value)) {
+                dependArray(value)
+            }
+        }
+    }
+    return value
+}
+```
+
+它主要做了两件事情：返回属性值以及收集依赖。第一行代码首先判断是否存在 getter，因为 `getter` 保存的是属性原有的 `get` 函数，如果存在则直接调用该函数，保证属性原有的读取操作正常运作，如果不存在就使用 `val` 作为属性的值，在最后一行代码中就将 `value` 返回，即做到了正确地返回属性值；而收集依赖的部分都在中间的代码，首先判断 `Dep.target` 是否存在，它保存的值就是要被收集的依赖，如果存在才需要收集，然后就执行 `dep` 对象的 `depend` 方法将依赖收集到 `dep` 中，再判断 `childOb` 是否存在，如果存在就执行 `childOb.dep.depend()`，这里的 `childOb === dep.__ob__` ，这句代码的执行就说明除了要将依赖收集到 `dep` 中，也要收集到 `dep.__ob__.dep` 中，那么为什么要将同样的依赖收集到不同的 `dep` 中呢？原因就是**它们收集的依赖的触发时机不同**，`dep` 中的依赖的触发时机是属性值被修改时，即在 `set` 函数中的 `dep.notify()`，`dep.__ob__.dep` 中的依赖是在使用 `$set` 或者 `Vue.set` 给数据对象添加新属性时触发，因为 `js` 语言本身的限制，在 `Proxy` 之前的 `Vue` 没有办法拦截到给对象添加属性的操作，所以提供了 `$set` 和 `Vue.set` 等方法让我们可以在给对象添加新属性时触发依赖，也就是说**`__ob__` 属性和 `__ob__.dep` 的主要作用就是为了添加、删除属性时有能力触发依赖**，这也就是 `Vue.set` 或者 `Vue.delete` 的原理。最后一个是对于数组属性值的处理，如果读取的属性值是数组就需要调用 `dependArray` 逐个触发数组每个元素的依赖收集，这也说明了 `Observe` 类对于纯对象和数组的处理方式是不同的。
+
+然后是 `set` 函数，当属性被修改时如何触发依赖：
+
+```js
+set: function reactiveSetter (newVal) {
+    const value = getter ? getter.call(obj) : val
+    /* eslint-disable no-self-compare */
+    if (newVal === val || (newVal !== newVal && value !== value)) {
+        return
+    }
+    /* eslint-enable no-self-compare */
+    if (process.env.NODE_ENV !== 'production' && customSetter) {
+        customSetter()
+    }
+    if (setter) {
+        setter.call(obj, newVal)
+    } else {
+        val = newVal
+    }
+    childOb = !shallow && observe(newVal)
+    dep.notify()
+}
+```
+
+与 `get` 函数类似，它也做了两件事：为属性设置新值和触发相应的依赖。首先第一句与 `get` 函数体第一句相同，取得属性原有的值，从而可以与新的值作比较，也就下面的比较语句，这里提一下 `(newVal !== newVal && value !== value)` ，如果
