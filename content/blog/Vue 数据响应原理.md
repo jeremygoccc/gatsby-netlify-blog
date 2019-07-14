@@ -253,7 +253,7 @@ export function defineReactive (
 (!getter || setter) && arguments.length === 2
 ```
 
-`arguments.length === 2` 表明当只传递两个参数即没有传递第三个参数 `val` 时，需要根据 `key` 主动获取对象上相应的值，`!(getter || setter)` 这个条件留到后面再讲。
+`arguments.length === 2` 表明当只传递两个参数即没有传递第三个参数 `val` 时，需要根据 `key` 主动获取对象上相应的值，`!(getter || setter)` 这个条件略过。
 
 然后定义了 `childOb` 变量，在上面的判断语句块中获取到了对象属性的值 `val`，但是 `val` 本身有可能也是一个对象，所以需要继续调用 `observe(val)` 函数进行深度观测，前提是 `defineReactive` 最后一个 `shallow` 参数应该为 `false`，在 `walk` 函数中没有传递这个参数，所以默认就是深度观测。
 
@@ -302,4 +302,121 @@ set: function reactiveSetter (newVal) {
 }
 ```
 
-与 `get` 函数类似，它也做了两件事：为属性设置新值和触发相应的依赖。首先第一句与 `get` 函数体第一句相同，取得属性原有的值，从而可以与新的值作比较，也就下面的比较语句，这里提一下 `(newVal !== newVal && value !== value)` ，如果
+与 `get` 函数类似，它也做了两件事：为属性设置新值和触发相应的依赖。首先第一句与 `get` 函数体第一句相同，取得属性原有的值，从而可以与新的值作比较，也就下面的比较语句，这里提一下 `(newVal !== newVal && value !== value)` ，如果新值与新值自身不全等，旧值与旧值自身也不全等，说明新旧值都是 `NaN`，所以也不做处理。下一个判断语句块，如果 `customSetter` 函数存在，就在非生产环境执行它。然后一段代码首先判断 `setter` 是否存在，如果存在就用它存储的属性原有的 `set` 函数继续设置属性的值，不存在就设置 `val` 的值为 `newVal`。最后两句代码首先是在需要深度观测的情况下对新设置的值（数组或纯对象）进行观测，然后再触发依赖。
+
+接下来我们看看响应式数据对于数组的处理方式，在 `Observer` 类中的 `constructor` 函数下的代码如下：
+
+```js
+if (Array.isArray(value)) {
+    const augment = hasProto
+    	? protoAugment
+    	: copyAugment
+    augment(value, arrayMethods, arrayKeys)
+    this.observeArray(value)
+} else {
+    this.walk(value)
+}
+```
+
+当被观测的值 `value` 是数组时就会执行对数组的观测处理。 因为数组是一个特殊的结构，它含有很多会改变数组自身的值的变异方法，比如：`push`、`pop`、`shift`、`unshift`等。当调用这些变异方法时也需要触发依赖，上面这段代码首先定义了 `augment` 常量，它依据 `hasProto` 的布尔值来定，就是检测当前环境是否可以使用 `__proto__` 属性，如果可以它的值就是 `protoAugment` 函数：
+
+```js
+/**
+ * Augment an target Object or Array by intercepting
+ * the prototype chain using __proto__
+ */
+function protoAugment (target, src: Object, keys: any) {
+    /* eslint-disable no-proto */
+    target.__proto__ = src
+    /* eslint-disable no-proto */
+}
+```
+
+这个函数就是通过设置数组实例的 `__proto__` 属性，让它指向一个代理原型从而做到拦截。
+
+ `protoAugment` 函数调用时传了 `value`、`arrayMethods` 和 `arrayKeys`，实际用到的只有前两个，具体看到 `src/core/observer/array.js` 文件下的 `arrayMethods`：
+
+```js
+/*
+ * not type checking this file because flow doesn't play well with
+ * dynamically accessing methods on Array prototype
+ */
+
+import { def } from '../util/index'
+
+const arrayProto = Array.prototype
+export const arrayMethods = Object.create(arrayProto)
+
+const methodsToPatch = [
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse'
+]
+
+/**
+ * Intercept mutating methods and emit events
+ */
+methodsToPatch.forEach(function (method) {
+  // cache original method
+  const original = arrayProto[method]
+  def(arrayMethods, method, function mutator (...args) {
+    const result = original.apply(this, args)
+    const ob = this.__ob__
+    let inserted
+    switch (method) {
+      case 'push':
+      case 'unshift':
+        inserted = args
+        break
+      case 'splice':
+        inserted = args.slice(2)
+        break
+    }
+    if (inserted) ob.observeArray(inserted)
+    // notify change
+    ob.dep.notify()
+    return result
+  })
+})
+```
+
+首先两句将 `arrayMethods` 对象导出，这里可以看到它的原型就是真正数组构造函数的原型，然后定义了 `methodsToPatch` 常量，它包含了所有需要拦截的数组变异方法的名字，然后循环遍历它并使用 `def` 函数在 `arrayMethods` 对象上定义与数组变异方法同名的函数，做到拦截的目的，具体的处理方式就是先缓存数组原本的变异方法，然后在 `def` 函数体内先调用缓存的方法并将它的返回值作为整个函数的返回值返回，保证拦截函数的功能与原本数组变异方法的功能一致，中间一段代码是元素新增时需要将新增加的元素变为响应式数据，即用 `observeArray` 函数对其进行观测，最后再执行该数组的所有依赖，即 `ob.dep.notify()`。
+
+当不支持 `__proto__` 属性时，`augment` 的值为 `copyAugment` 函数：
+
+```js
+/**
+ * Augment an target Object or Array by defining
+ * hidden properties.
+ */
+/* istanbul ignore next */
+function copyAugment (target: Object, src: Object, keys: Array<string>) {
+    for (let i = 0, l = keys.length; i < l; i++) {
+        const key = keys[i]
+        def(target, key, src[key])
+    }
+}
+```
+
+这个函数接收的参数与 `protoAugment` 函数相同，它使用了第三个参数 `arrayKeys`  即所有要拦截的数组变异方法的名称，再遍历 `arrayKeys` 使用 `def` 函数在数组实例上定义与数组变异方法同名的函数，从而实现拦截操作。
+
+回到 `constructor` 函数，接下来是调用 `observeArray` 方法：
+
+```js
+/**
+  * Observe a list of Array items.
+  */
+observeArray (items: Array<any>) {
+  for (let i = 0, l = items.length; i < l; i++) {
+    observe(items[i])
+  }
+}
+```
+
+对数组进行遍历，并逐个调用 `observe` 函数，这样当数组内嵌套数组或对象时就能递归观测对应的元素了。
+
+到这里我们就理解了数据响应系统对于纯对象和数组的处理方式的区别，对于纯对象只需要逐个将对象的属性重新定义为访问器属性并且当属性为纯对象时递归定义即可，而对于数组则需要通过拦截数组变异方法的方式，这也是因为对于数组来说，它的索引不是“访问器属性”，所以当数组的某个元素有依赖时触发不了这个元素的 `get` 函数。
