@@ -28,9 +28,9 @@ function Bio() {
               }}
             />
             <p style={{ maxWidth: 310 }}>
-              Hi~, 我是 <a href="https://mobile.twitter.com/Jeremy_0523">Jeremy</a>
+              Hi~, 我是 <a href="https://github.com/fxbabys">Jeremy</a>
               <br />
-              这里是我分享技术与生活的地方
+              不要高估你一天能做的事，更不要低估你一年能做的事。
             </p>
           </div>
         )
