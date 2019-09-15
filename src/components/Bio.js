@@ -27,7 +27,7 @@ function Bio() {
                 borderRadius: `100%`,
               }}
             />
-            <p style={{ maxWidth: 310 }}>
+            <p>
               Hi~, 我是 <a href="https://github.com/fxbabys">Jeremy</a>
               <br />
               不要高估你一天能做的事，更不要低估你一年能做的事。
