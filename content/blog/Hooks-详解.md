@@ -7,7 +7,7 @@ tags: Hooks
 
 在 Hooks 正式推出不久时我写了一篇 [Hooks 随谈]([https://jeremy.netlify.com/Hooks-%E9%9A%8F%E8%B0%88/](https://jeremy.netlify.com/Hooks-随谈/)) ，主要是从概念介绍上对它的简单的一个分析理解，实习时开发的新控制台则完全使用了这个特性，因此想结合目前的实践经验对 Hooks 做一个最佳实践与对比的分析。
 
-### Ｃapture Value
+### Capture Value
 
 从 Hooks 出现后，函数式组件也具有了状态的特性，因此避免 Stateless Component 而统一叫 Function Component 更为恰当。这里先从 props 的不可变性上对 Function Component 与 Class Component 做一个对比：
 
